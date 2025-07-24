@@ -1,6 +1,8 @@
 package com.sosorin.ranabot.plugin;
 
+import cn.hutool.core.io.FileUtil;
 import com.sosorin.ranabot.annotation.RanaPlugin;
+import com.sosorin.ranabot.config.PluginConfigProperties;
 import com.sosorin.ranabot.entity.bot.IBot;
 import com.sosorin.ranabot.entity.message.Message;
 import com.sosorin.ranabot.http.ResponseModel;
@@ -14,11 +16,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.io.File;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
-import java.util.stream.Collectors;
 
 /**
  * @author rana-bot
@@ -32,8 +35,33 @@ public class AssPlugin extends AbstractPlugin {
 
     private static final Set<String> GROUP_ID_SET = new CopyOnWriteArraySet<>();
 
+    private File groupIdFile;
+
     @Autowired
     private IBot bot;
+    @Autowired
+    private PluginConfigProperties pluginConfigProperties;
+
+    @Override
+    public void onEnable() {
+        String assDataDir = pluginConfigProperties.getPluginDataDir() + "/" + this.name;
+        String groupFile = assDataDir + "/group_ids.txt";
+        if (FileUtil.exist(groupFile)) {
+            GROUP_ID_SET.addAll(FileUtil.readLines(groupFile, "UTF-8"));
+        } else {
+            FileUtil.writeLines(GROUP_ID_SET, groupFile, "UTF-8");
+        }
+        groupIdFile = FileUtil.file(groupFile);
+        log.info("群组ID文件: {}", groupIdFile.getAbsolutePath());
+        log.info("已加载群组ID: {}", GROUP_ID_SET);
+        super.onEnable();
+    }
+
+    @Override
+    public void onDisable() {
+        GROUP_ID_SET.clear();
+        super.onDisable();
+    }
 
     public AssPlugin() {
         super("一个简单的番剧更新通知插件", "0.0.1", "RanaBot");
@@ -80,6 +108,7 @@ public class AssPlugin extends AbstractPlugin {
         if (set instanceof List<?>) {
             GROUP_ID_SET.clear();
             GROUP_ID_SET.addAll((List<String>) set);
+            FileUtil.writeLines(GROUP_ID_SET, groupIdFile, "UTF-8");
         }
         return super.setParams(params);
     }
