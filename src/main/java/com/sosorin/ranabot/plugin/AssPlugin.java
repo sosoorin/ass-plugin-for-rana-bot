@@ -1,13 +1,12 @@
 package com.sosorin.ranabot.plugin;
 
-import com.alibaba.fastjson2.JSON;
-import com.alibaba.fastjson2.JSONArray;
-import com.sosorin.ranabot.ResponseModel;
 import com.sosorin.ranabot.annotation.RanaPlugin;
-import com.sosorin.ranabot.bot.IBot;
+import com.sosorin.ranabot.entity.bot.IBot;
+import com.sosorin.ranabot.entity.message.Message;
+import com.sosorin.ranabot.http.ResponseModel;
 import com.sosorin.ranabot.model.EventBody;
 import com.sosorin.ranabot.model.PluginResult;
-import com.sosorin.ranabot.util.SendEntityUtil;
+import com.sosorin.ranabot.util.MessageUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -56,12 +55,10 @@ public class AssPlugin extends AbstractPlugin {
     @PostMapping("/onUpdate")
     public ResponseModel<?> onUpdate(@RequestBody String data) {
         if (this.isEnabled()) {
-            JSONArray messageArray = JSON.parseArray(data);
-            log.info("收到番剧更新消息: {}", messageArray);
+            List<Message> messages = MessageUtil.parseMessageArray(data);
+            log.info("收到番剧更新消息: {}", messages);
             GROUP_ID_SET.forEach(groupId -> {
-                String rawMessage = SendEntityUtil.buildSendGroupMessageStr(groupId, messageArray);
-                log.info("发送群消息: {}", rawMessage);
-                bot.sendRawMessageStr(rawMessage);
+                bot.sendGroupMessage(groupId, messages);
             });
             return ResponseModel.SUCCESS();
         }
