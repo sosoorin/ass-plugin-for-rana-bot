@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.stream.Collectors;
 
 /**
  * @author rana-bot
@@ -58,7 +59,9 @@ public class AssPlugin extends AbstractPlugin {
             List<Message> messages = MessageUtil.parseMessageArray(data);
             log.info("收到番剧更新消息: {}", messages);
             GROUP_ID_SET.forEach(groupId -> {
-                bot.sendGroupMessage(groupId, messages);
+                log.info("正在发送番剧更新消息给群组[{}]...", groupId);
+                Long messageId = bot.sendGroupMessage(groupId, messages);
+                log.info("发送番剧更新消息成功, 消息ID为: {}", messageId);
             });
             return ResponseModel.SUCCESS();
         }
